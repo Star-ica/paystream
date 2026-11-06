@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayStream — Onchain Payroll & Salary Streaming Protocol</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--navy:#0d2a4a;--blue:#1e4080;--accent:#6366f1;--green:#10b981;--text:#1a1a2e;--muted:#6b7280;--border:#e5e7eb;--bg-alt:#f8fafc}
+  body{font-family:'Inter',system-ui,sans-serif;font-size:11pt;line-height:1.7;color:var(--text);background:#fff;max-width:900px;margin:0 auto;padding:2.5cm}
+  @page{size:A4;margin:2.5cm;@bottom-right{content:"Page " counter(page) " of " counter(pages);font-size:9pt;color:#999}}
+  .title-page{text-align:center;min-height:85vh;display:flex;flex-direction:column;justify-content:center;align-items:center;page-break-after:always;border-bottom:3px solid var(--navy);padding-bottom:2rem}
+  .logo{width:80px;height:80px;background:linear-gradient(135deg,var(--accent),var(--green));border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto 2rem}
+  .title-page h1{font-size:2.8rem;font-weight:700;color:var(--navy);margin-bottom:.5rem}
+  .title-page .sub{font-size:1.3rem;color:var(--blue);margin-bottom:2rem}
+  .title-page .meta{font-size:.9rem;color:var(--muted);line-height:2}
+  .vbadge{display:inline-block;background:var(--navy);color:#fff;padding:.3rem 1rem;border-radius:20px;font-size:.85rem;font-weight:600;margin-bottom:1rem}
+  .abstract{background:var(--bg-alt);border-left:4px solid var(--accent);padding:1.5rem 2rem;margin-top:2rem;text-align:left;border-radius:0 8px 8px 0;font-size:.95rem;max-width:700px}
+  .toc{page-break-after:always}
+  .toc h2{font-size:1.6rem;color:var(--navy);border-bottom:2px solid var(--navy);padding-bottom:.5rem;margin-bottom:1.5rem}
+  .toc ol{list-style:none;counter-reset:toc}
+  .toc>ol>li{counter-increment:toc;margin-bottom:.4rem}
+  .toc>ol>li::before{content:counter(toc)". ";font-weight:600;color:var(--navy)}
+  .toc a{color:var(--text);text-decoration:none}
+  .toc ol ol{margin-left:1.5rem;list-style:lower-alpha;color:var(--muted);font-size:.9rem}
+  h2{font-size:1.5rem;color:var(--navy);border-bottom:2px solid var(--border);padding-bottom:.4rem;margin:2.5rem 0 1rem;page-break-after:avoid}
+  h3{font-size:1.15rem;color:var(--blue);margin:1.8rem 0 .6rem;page-break-after:avoid}
+  p{margin-bottom:.9rem}
+  ul,ol{margin:.5rem 0 .9rem 1.5rem}
+  li{margin-bottom:.3rem}
+  pre,code{font-family:'Courier New',monospace;font-size:.85rem}
+  pre{background:#0d2a4a;color:#e2e8f0;padding:1.2rem 1.5rem;border-radius:8px;overflow-x:auto;margin:1rem 0 1.2rem;page-break-inside:avoid}
+  code{background:#f1f5f9;color:#c0392b;padding:.15rem .4rem;border-radius:3px}
+  pre code{background:none;color:inherit;padding:0}
+  table{width:100%;border-collapse:collapse;margin:1rem 0 1.5rem;font-size:.9rem;page-break-inside:avoid}
+  th{background:var(--navy);color:#fff;padding:.7rem 1rem;text-align:left;font-weight:600}
+  td{padding:.6rem 1rem;border-bottom:1px solid var(--border);vertical-align:top}
+  tr:nth-child(even) td{background:var(--bg-alt)}
+  .callout{border-left:4px solid var(--accent);background:#eef2ff;padding:1rem 1.5rem;margin:1rem 0;border-radius:0 6px 6px 0;page-break-inside:avoid}
+  .callout.warn{border-color:#f59e0b;background:#fffbeb}
+  .callout.danger{border-color:#ef4444;background:#fef2f2}
+  .callout strong{display:block;margin-bottom:.3rem}
+  .diagram{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin:1rem 0;font-family:monospace;font-size:.82rem;white-space:pre;page-break-inside:avoid}
+  .snum{color:var(--accent);font-weight:700;margin-right:.4rem}
+  footer{margin-top:4rem;border-top:1px solid var(--border);padding-top:1rem;font-size:.8rem;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="title-page">
+  <div class="logo">💸</div>
+  <div class="vbadge">Version 1.0 — BOT Chain</div>
+  <h1>PayStream</h1>
+  <p class="sub">Onchain Payroll &amp; Salary Streaming Protocol</p>
+  <div class="meta">
+    <div>Network: BOT Chain (Chain ID 677)</div>
+    <div>Stack: Solidity ^0.8.20 · ethers.js v6 · Vanilla JS</div>
+    <div>Published: November 2026</div>
+  </div>
+  <div class="abstract">
+    <strong>Abstract.</strong> PayStream is a non-custodial, on-chain payroll protocol built on BOT Chain. It enables organizations and DAOs to fund payroll treasuries, register employees, and configure salary streams. Employees accrue salary continuously and claim it on-demand via a blockchain transaction. No automatic execution occurs — all state changes require explicit on-chain transactions. This document describes the protocol architecture, payroll accounting, payment schedules, token support, and security model.
+  </div>
+</div>
+
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#s1">Executive Summary</a></li>
+    <li><a href="#s2">Protocol Architecture</a><ol><li>Contract System</li><li>Data Flow</li></ol></li>
+    <li><a href="#s3">Payroll Accounting</a><ol><li>Accrual Model</li><li>Claim Mechanics</li><li>Salary Modification</li></ol></li>
+    <li><a href="#s4">Payment Schedules</a></li>
+    <li><a href="#s5">Token Support</a></li>
+    <li><a href="#s6">Treasury Management</a></li>
+    <li><a href="#s7">Employee Lifecycle</a></li>
+    <li><a href="#s8">Security Model</a></li>
+    <li><a href="#s9">Deployment Summary</a></li>
+    <li><a href="#s10">Roadmap</a></li>
+    <li><a href="#s11">Glossary</a></li>
+  </ol>
+</div>
+
+<div id="s1">
+<h2><span class="snum">1.</span> Executive Summary</h2>
+<p>PayStream replaces traditional payroll infrastructure with smart contracts. Employers deposit funds once; employees accrue salary proportionally over time and withdraw whenever they choose. All payroll records — deposits, streams, claims — are permanently on-chain.</p>
+<ul>
+  <li><strong>Non-custodial.</strong> Funds are held by the PayrollStreamManager contract. No third party controls them.</li>
+  <li><strong>Proportional accrual.</strong> Salary accrues continuously by the second, not in discrete lump sums.</li>
+  <li><strong>Claim-based withdrawals.</strong> Employees trigger claims explicitly. No scheduled automatic transfers.</li>
+  <li><strong>Employer controls.</strong> Streams can be paused, terminated, or salary-adjusted at any time — all recorded on-chain with transparent effective dates.</li>
+  <li><strong>BOT and ERC-20 support.</strong> Payroll can be denominated in native BOT or any ERC-20 token (such as USDT).</li>
+</ul>
+</div>
+
+<div id="s2">
+<h2><span class="snum">2.</span> Protocol Architecture</h2>
+<h3>2.1 Contract System</h3>
+<table>
+  <thead><tr><th>Contract</th><th>Role</th></tr></thead>
+  <tbody>
+    <tr><td><code>OrganizationRegistry</code></td><td>Stores employer organization profiles; gates org-owner functions</td></tr>
+    <tr><td><code>EmployeeRegistry</code></td><td>Stores employee records per organization; tracks status (Active/Paused/Terminated)</td></tr>
+    <tr><td><code>PayrollStreamManager</code></td><td>Core logic: treasury, stream creation, accrual accounting, claim execution</td></tr>
+  </tbody>
+</table>
+
+<h3>2.2 Data Flow</h3>
+<div class="diagram">
+Employer ──► OrganizationRegistry.createOrganization()
+                 └─► orgId assigned
+
+Employer ──► EmployeeRegistry.addEmployee(orgId, wallet, name)
+                 └─► employeeId assigned
+
+Employer ──► PayrollStreamManager.depositBOT(orgId)  { value: X }
+          or PayrollStreamManager.depositToken(orgId, token, amount)
+                 └─► orgTreasury[orgId][token] += amount
+
+Employer ──► PayrollStreamManager.createStream(orgId, employeeId, token, salary, period, startTime)
+                 └─► streams[streamId] = { salaryPerPeriod, periodDuration, lastClaimTime, ... }
+
+Time passes...
+
+Employee ──► PayrollStreamManager.claimSalary(streamId)
+                 └─► _accrue(): pending = salary * elapsed / period
+                 └─► CHECKS: status Active, treasury >= claimable
+                 └─► EFFECTS: accruedBalance = 0, lastClaimTime = now, treasury -= claimable
+                 └─► INTERACTIONS: transfer BOT or ERC-20 to employee wallet
+</div>
+</div>
+
+<div id="s3">
+<h2><span class="snum">3.</span> Payroll Accounting</h2>
+
+<h3>3.1 Accrual Model</h3>
+<p>Salary accrues continuously and proportionally. For any active stream, the pending accrual at any moment is:</p>
+<pre><code>pending = salaryPerPeriod × (block.timestamp − lastClaimTime) / periodDuration</code></pre>
+<p>Example: an employee earning 2,000 BOT per week who last claimed 3.5 days ago has accrued approximately 1,000 BOT.</p>
+<p>The accrual is calculated lazily — it is not stored or updated on every block. It is computed on-demand when <code>getClaimable()</code> is called or when any state-changing function touches the stream.</p>
+
+<h3>3.2 Claim Mechanics</h3>
+<p>Claiming follows strict checks-effects-interactions ordering to prevent reentrancy and double-claiming:</p>
+<pre><code>function claimSalary(uint256 streamId) external nonReentrant {
+  // 1. Accrue pending into accruedBalance
+  _accrue(streamId);
+  uint256 claimable = accruedBalance[streamId];
+
+  // CHECKS
+  require(claimable > 0, "Nothing to claim");
+  require(orgTreasury[orgId][token] >= claimable, "Insufficient funds");
+
+  // EFFECTS (state updated before any transfer)
+  accruedBalance[streamId] = 0;
+  lastClaimTime = block.timestamp;
+  totalPaid += claimable;
+  orgTreasury[orgId][token] -= claimable;
+
+  // INTERACTIONS (transfer last)
+  transfer(employee, claimable);
+}</code></pre>
+
+<div class="callout warn">
+  <strong>⚠️ No Automatic Execution</strong>
+  PayStream contracts do not and cannot execute automatically at future dates. Employees must submit a transaction to trigger a claim. Employers must submit transactions for all administrative actions. This is a fundamental property of EVM smart contracts.
+</div>
+
+<h3>3.3 Salary Modification</h3>
+<p>When an employer updates a salary, the pending accrual under the old rate is captured first:</p>
+<ol>
+  <li><code>_accrue(streamId)</code> is called — this banks the pending amount at the current rate into <code>accruedBalance</code>.</li>
+  <li><code>salaryPerPeriod</code> is updated to the new value.</li>
+  <li>Future accrual uses the new rate from this point forward.</li>
+</ol>
+<p>This ensures employees are paid correctly for time worked at the old rate up to the modification timestamp.</p>
+</div>
+
+<div id="s4">
+<h2><span class="snum">4.</span> Payment Schedules</h2>
+<p>PayStream supports any <code>periodDuration</code> of at least 1 day. The standard options are:</p>
+<table>
+  <thead><tr><th>Schedule</th><th>Period (seconds)</th><th>Example Salary</th></tr></thead>
+  <tbody>
+    <tr><td>Weekly</td><td>604,800</td><td>2,000 BOT/week = ~285.7 BOT/day</td></tr>
+    <tr><td>Bi-Weekly</td><td>1,209,600</td><td>4,000 BOT/bi-week = ~285.7 BOT/day</td></tr>
+    <tr><td>Monthly (30-day)</td><td>2,592,000</td><td>8,000 BOT/month = ~266.7 BOT/day</td></tr>
+    <tr><td>Custom</td><td>Any ≥ 86,400</td><td>Configurable by employer</td></tr>
+  </tbody>
+</table>
+<p>Because accrual is proportional, the salary is effectively the same daily rate regardless of which period option is selected — the period only affects how the nominal salary figure is stated, not what the employee earns per second.</p>
+</div>
+
+<div id="s5">
+<h2><span class="snum">5.</span> Token Support</h2>
+<table>
+  <thead><tr><th>Token</th><th>Deposit Method</th><th>Transfer Method</th></tr></thead>
+  <tbody>
+    <tr><td>BOT (native)</td><td><code>depositBOT(orgId)</code> payable</td><td>Low-level <code>call{value}()</code> with return check</td></tr>
+    <tr><td>ERC-20 (e.g. USDT)</td><td><code>depositToken(orgId, token, amount)</code> — requires prior ERC-20 approval</td><td><code>SafeERC20.safeTransfer()</code></td></tr>
+  </tbody>
+</table>
+<div class="callout danger">
+  <strong>🚫 Fee-on-Transfer Tokens</strong>
+  Tokens that deduct a fee on each transfer may credit less to the recipient than the stream's salary amount specifies. PayStream v1.0 does not adjust for this. Verify token behavior before configuring a stream with non-standard ERC-20 tokens.
+</div>
+<p>Each stream is denominated in a single token set at creation. Changing the token requires terminating the existing stream and creating a new one.</p>
+</div>
+
+<div id="s6">
+<h2><span class="snum">6.</span> Treasury Management</h2>
+<p>Each organization has a per-token treasury balance tracked in <code>orgTreasury[orgId][token]</code>. This balance covers all active streams for that organization in that token.</p>
+
+<h3>Funding Responsibility</h3>
+<p>Employers are responsible for keeping the treasury funded. If the treasury balance falls below the claimable amount for a stream, that claim will revert with <em>"Insufficient payroll funds"</em>. The employee's accrued balance is preserved and can be claimed once the employer tops up the treasury.</p>
+
+<h3>Underfunding Detection</h3>
+<p>The frontend reads <code>getTreasuryBalance(orgId, token)</code> and calculates projected run-out time based on total active stream accrual rates. A warning is displayed when the treasury covers less than 30 days of combined payroll.</p>
+
+<h3>Treasury Withdrawal</h3>
+<p>Employers can withdraw unallocated treasury funds via <code>withdrawTreasury(orgId, token, amount)</code>. This does not check accrued employee balances — it is the employer's responsibility to leave sufficient funds to cover accrued and near-term payroll.</p>
+</div>
+
+<div id="s7">
+<h2><span class="snum">7.</span> Employee Lifecycle</h2>
+<div class="diagram">
+addEmployee() ──► Active
+                    │
+         ┌──────────┼──────────┐
+         ▼          ▼          ▼
+    setStatus       │      setStatus
+     (Paused)   [stream]  (Terminated)
+         │      running        │
+         ▼                     ▼
+       Paused             Terminated
+         │                (final state)
+         ▼
+    setStatus
+    (Active) ──► stream resumes
+</div>
+<p>When an employee is paused or terminated, their payroll stream status is updated separately via <code>setStreamStatus()</code>. The employee registry status and stream status are independent — this allows an employer to pause a stream without removing the employee record.</p>
+<p>Termination is final. A terminated employee's stream stops accruing. Any balance already accrued remains claimable.</p>
+</div>
+
+<div id="s8">
+<h2><span class="snum">8.</span> Security Model</h2>
+<table>
+  <thead><tr><th>Threat</th><th>Mitigation</th><th>Residual Risk</th></tr></thead>
+  <tbody>
+    <tr><td>Reentrancy on claimSalary</td><td>ReentrancyGuard + checks-effects-interactions; state updated before transfer</td><td>Low</td></tr>
+    <tr><td>Double-claim</td><td>accruedBalance zeroed before transfer; lastClaimTime updated atomically</td><td>Low</td></tr>
+    <tr><td>Unauthorized claim</td><td><code>require(s.employeeWallet == msg.sender)</code></td><td>Low</td></tr>
+    <tr><td>Unauthorized stream creation</td><td><code>onlyOrgOwner(orgId)</code> modifier checks OrganizationRegistry</td><td>Low</td></tr>
+    <tr><td>Integer overflow in accrual</td><td>Solidity ^0.8.20 built-in overflow protection</td><td>None</td></tr>
+    <tr><td>Treasury drain by employer</td><td>Employer can withdraw treasury — this is intentional (their funds). Accrued employee balances are not separately protected in v1.0.</td><td>Medium — mitigated in v2.0</td></tr>
+    <tr><td>ERC-20 transfer failure</td><td>SafeERC20.safeTransfer handles non-standard return values</td><td>Low</td></tr>
+    <tr><td>Contract paused</td><td>Pause halts new claims and stream creation; existing records remain readable</td><td>Low — only owner can pause</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <strong>⚠️ Treasury Drain Risk (v1.0)</strong>
+  In v1.0, an employer who withdraws the entire treasury prevents employees from claiming accrued salaries until the treasury is refunded. Future versions will introduce a protected accrued-balance reserve that cannot be withdrawn.
+</div>
+
+<h3>Access Control Summary</h3>
+<table>
+  <thead><tr><th>Function</th><th>Permitted Caller</th></tr></thead>
+  <tbody>
+    <tr><td>createOrganization()</td><td>Any wallet</td></tr>
+    <tr><td>addEmployee()</td><td>PayrollStreamManager (authorized by EmployeeRegistry owner)</td></tr>
+    <tr><td>depositBOT / depositToken</td><td>Org owner only</td></tr>
+    <tr><td>createStream()</td><td>Org owner only</td></tr>
+    <tr><td>setStreamStatus()</td><td>Org owner only</td></tr>
+    <tr><td>updateSalary()</td><td>Org owner only</td></tr>
+    <tr><td>withdrawTreasury()</td><td>Org owner only</td></tr>
+    <tr><td>claimSalary()</td><td>Employee wallet only; nonReentrant</td></tr>
+    <tr><td>pause() / unpause()</td><td>Contract owner (deployer) only</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div id="s9">
+<h2><span class="snum">9.</span> Deployment Summary</h2>
+<p>See <code>deploy.md</code> for the full guide. Deploy order:</p>
+<ol>
+  <li><strong>OrganizationRegistry</strong> — no constructor args</li>
+  <li><strong>EmployeeRegistry</strong> — no constructor args</li>
+  <li><strong>PayrollStreamManager</strong> — takes OrganizationRegistry and EmployeeRegistry addresses</li>
+  <li>Call <code>employeeRegistry.setPayrollManager(payrollManagerAddress)</code></li>
+</ol>
+<p>Update <code>CONFIG.contracts</code> in <code>index.html</code> and set <code>DEMO = false</code> after deployment.</p>
+</div>
+
+<div id="s10">
+<h2><span class="snum">10.</span> Roadmap</h2>
+<table>
+  <thead><tr><th>Phase</th><th>Features</th></tr></thead>
+  <tbody>
+    <tr><td>v1.0 (Current)</td><td>Org registry, employee registry, proportional accrual, claim-based withdrawals, BOT + ERC-20, pause/terminate/modify streams</td></tr>
+    <tr><td>v1.1</td><td>Protected accrued-balance reserve (employer cannot withdraw funds covering accrued employee balances)</td></tr>
+    <tr><td>v2.0</td><td>Multi-token per stream, payroll scheduling calendar view, batch claim for multiple streams</td></tr>
+    <tr><td>v2.1</td><td>DAO governance for payroll policy changes, on-chain payslip records, payroll analytics dashboard</td></tr>
+    <tr><td>v3.0</td><td>Cross-org employee assignments, contractor payment flows, escrow-based milestone payments</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div id="s11">
+<h2><span class="snum">11.</span> Glossary</h2>
+<table>
+  <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+  <tbody>
+    <tr><td>Payroll Stream</td><td>An on-chain record linking an employee to a salary amount, token, period, and accrual state</td></tr>
+    <tr><td>Accrual</td><td>Continuous proportional earning of salary over time, calculated as salary × elapsed / period</td></tr>
+    <tr><td>Claim</td><td>An explicit on-chain transaction by the employee to withdraw their accrued balance</td></tr>
+    <tr><td>Treasury</td><td>The per-org, per-token balance held by PayrollStreamManager to fund salary claims</td></tr>
+    <tr><td>Period Duration</td><td>The time window (in seconds) over which one salaryPerPeriod amount is earned</td></tr>
+    <tr><td>lastClaimTime</td><td>The block timestamp at which the stream last had its accrual captured (claim or update)</td></tr>
+    <tr><td>SafeERC20</td><td>OpenZeppelin library for safe ERC-20 interactions; handles non-standard return values</td></tr>
+    <tr><td>Non-custodial</td><td>No third party holds the funds — only the smart contract and its defined rules control them</td></tr>
+    <tr><td>ReentrancyGuard</td><td>OpenZeppelin modifier preventing reentrant calls to protected functions</td></tr>
+    <tr><td>Org Owner</td><td>The wallet address that created an organization and controls its payroll settings</td></tr>
+  </tbody>
+</table>
+</div>
+
+<footer>PayStream — Onchain Payroll &amp; Salary Streaming Protocol · BOT Chain (Chain ID 677) · Version 1.0 · November 2026</footer>
+</body>
+</html>
